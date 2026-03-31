@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Service Points</h2>
+    {% if user_role == 'admin' %}
+    <form method="GET" class="d-flex">
+        <select name="district_id" class="form-select me-2">
+            <option value="">All Districts</option>
+            {% for d in districts %}
+            <option value="{{ d.id }}" {% if selected_district_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% for sp in service_points %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ sp.name }}</h5>
+                {% if user_role == 'admin' %}
+                <small class="text-light">{{ sp.district.name }}</small>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    <span class="badge bg-info">{{ sp.queue|length }} in queue</span>
+                    <span class="badge bg-success ms-2">{{ sp.active|length }} active</span>
+                </p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('service_point_detail', id=sp.id) }}" class="btn btn-sm btn-outline-primary">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 600px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            {% if user %}Edit User{% else %}Add New User{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% if user %}{{ url_for('edit_user', id=user.id) }}{% else %}{{ url_for('add_user') }}{% endif %}">
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" value="{{ user.username if user }}" {% if user %}readonly{% endif %} required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Role</label>
+                <select class="form-select" name="role" required>
+                    {% if session['role'] == 'admin' %}
+                    <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="national" {% if user and user.role == 'national' %}selected{% endif %}>National</option>
+                    <option value="provincial" {% if user and user.role == 'provincial' %}selected{% endif %}>Provincial</option>
+                    <option value="district_admin" {% if user and user.role == 'district_admin' %}selected{% endif %}>District Admin</option>
+                    {% endif %}
+                    <option value="reception" {% if user and user.role == 'reception' %}selected{% endif %}>Reception</option>
+                    <option value="doctor" {% if user and user.role == 'doctor' %}selected{% endif %}>Doctor</option>
+                    <option value="nurse" {% if user and user.role == 'nurse' %}selected{% endif %}>Nurse</option>
+                    <option value="pharmacy" {% if user and user.role == 'pharmacy' %}selected{% endif %}>Pharmacy</option>
+                    <option value="rehabilitation" {% if user and user.role == 'rehabilitation' %}selected{% endif %}>Rehabilitation</option>
+                    <option value="nutrition" {% if user and user.role == 'nutrition' %}selected{% endif %}>Nutrition</option>
+                </select>
+            </div>
+
+            {% if session['role'] == 'admin' %}
+            <div class="mb-3">
+                <label class="form-label">District</label>
+                <select class="form-select" name="district_id">
+                    <option value="">-- None --</option>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}" {% if user and user.district_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Required for: District Admin, Reception, Doctor, Nurse, Pharmacy, Rehabilitation, Nutrition.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Province</label>
+                <select class="form-select" name="province_id">
+                    <option value="">-- None --</option>
+                    {% for p in provinces %}
+                    <option value="{{ p.id }}" {% if user and user.province_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Required for Provincial role.</div>
+            </div>
+            {% elif session['role'] == 'district_admin' %}
+            <div class="mb-3">
+                <label class="form-label">District</label>
+                <input type="text" class="form-control" value="{{ districts[0].name if districts else 'Your district' }}" readonly disabled>
+                <input type="hidden" name="district_id" value="{{ districts[0].id if districts else '' }}">
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" name="password" placeholder="{% if user %}Leave blank to keep current{% else %}Enter password{% endif %}">
+                {% if user %}
+                <small class="text-muted">Leave blank to keep current password</small>
+                {% endif %}
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if user %}Update User{% else %}Create User{% endif %}
+                </button>
+                <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

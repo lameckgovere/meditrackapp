@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% from 'macros.html' import format_time %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Time Analysis</h2>
+    <div class="d-flex">
+        <form method="GET" class="d-flex me-2 flex-wrap gap-2">
+            <select name="year" class="form-select" style="width: 120px;">
+                <option value="">All Years</option>
+                {% for year in range(2020, 2031) %}
+                <option value="{{ year }}" {% if filter_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="month" class="form-select" style="width: 120px;">
+                <option value="">All Months</option>
+                {% for i in range(1, 13) %}
+                <option value="{{ i }}" {% if filter_month == i %}selected{% endif %}>
+                    {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i-1] }}
+                </option>
+                {% endfor %}
+            </select>
+
+            {% if available_provinces %}
+            <select name="province_id" class="form-select" style="width: 150px;">
+                <option value="">All Provinces</option>
+                {% for p in available_provinces %}
+                <option value="{{ p.id }}" {% if filter_province == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            {% if available_districts %}
+            <select name="district_id" class="form-select" style="width: 150px;">
+                <option value="">All Districts</option>
+                {% for d in available_districts %}
+                <option value="{{ d.id }}" {% if filter_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <button class="btn btn-success no-print" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5>Total Patients</h5>
+                <div class="metric-value">{{ total_patients }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Longest Wait</h5>
+                <div class="metric-value">{{ longest_wait|format_min_sec }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>Shortest Wait</h5>
+                <div class="metric-value">{{ shortest_wait|format_min_sec }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card text-white bg-warning">
+            <div class="card-body text-center">
+                <h5>Over 2 Hours</h5>
+                <div class="metric-value">{{ over_2_hours }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card text-white bg-secondary">
+            <div class="card-body text-center">
+                <h5>Multiple Services</h5>
+                <div class="metric-value">{{ patients_multiple_services }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card text-white bg-danger">
+            <div class="card-body text-center">
+                <h5>Throughput</h5>
+                <div class="metric-value">{{ throughput|round(1) }} patients/hr</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card metric-card text-white bg-dark">
+            <div class="card-body text-center">
+                <h5>Avg. Stay</h5>
+                <div class="metric-value">{{ (avg_stay / 60)|round(1) }} min</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card metric-card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Overall Avg. Wait</h5>
+                <div class="metric-value">{{ (overall_avg_wait / 60)|round(1) }} min</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Point Performance -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Service Point Performance</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Service Point</th>
+                    <th>Over 30 Min</th>
+                    <th>Avg Wait</th>
+                    <th>Median Wait</th>
+                    <th>Mode Wait</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in sp_metrics %}
+                <tr>
+                    <td>{{ sp.name }}</td>
+                    <td>{{ sp.over_30 }}</td>
+                    <td>{{ sp.mean|format_min_sec }}</td>
+                    <td>{{ sp.median|format_min_sec }}</td>
+                    <td>{{ sp.mode|format_min_sec }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Poor Performing Service Points -->
+{% if poor_performers %}
+<div class="card mb-4 border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Poor Performing Service Points</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            These service points have more than 50% of patients waiting over 30 minutes
+        </div>
+        <ul class="list-group">
+            {% for sp in poor_performers %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ sp.name }}
+                <span class="badge bg-danger">{{ sp.over_30 }} patients</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Peak Hour -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Peak Hour Analysis</h5>
+    </div>
+    <div class="card-body text-center">
+        <h4>Busiest Hour: {{ peak_hour }}:00 - {{ peak_hour + 1 }}:00</h4>
+        <p class="lead">{{ peak_count }} patients registered</p>
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar" role="progressbar"
+                style="width: {{ (peak_count / total_patients * 100)|round(1) if total_patients > 0 else 0 }}%;"
+                aria-valuenow="{{ peak_count }}" aria-valuemin="0" aria-valuemax="{{ total_patients }}">
+                {{ (peak_count / total_patients * 100)|round(1) if total_patients > 0 else 0 }}%
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Efficiency -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Service Efficiency</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <h5>Total Service Time</h5>
+                <h3>{{ (total_service_time / 3600)|round(1) }} hours</h3>
+            </div>
+            <div class="col-md-6 text-center">
+                <h5>Avg. Service Time per Patient</h5>
+                <h3>{{ (total_service_time / total_patients / 60)|round(1) if total_patients > 0 else 0 }} mins</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

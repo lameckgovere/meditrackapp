@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediTrack</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            padding-top: 70px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .dashboard-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+            border: none;
+            overflow: hidden;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.8em;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            list-style: none;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-point {
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .timeline-content {
+            padding: 15px;
+            border-left: 2px solid var(--primary);
+            background: white;
+            border-radius: 0 8px 8px 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+        }
+
+        .avatar {
+            background-color: #4361ee;
+            color: white;
+            font-weight: bold;
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .metric-card {
+            border-radius: 10px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .comment-card {
+            border-left: 4px solid var(--primary);
+            background-color: #f8f9fa;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') if session['role'] != 'provincial' else url_for('provincial_dashboard') }}">
+                <i class="bi bi-heart-pulse me-2"></i>
+                <span>MediTrack</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if session['role'] != 'provincial' %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('dashboard') }}" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('service_points') }}" href="{{ url_for('service_points') }}">
+                            <i class="bi bi-geo-alt me-1"></i> Service Points
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('time_metrics') }}" href="{{ url_for('time_metrics') }}">
+                            <i class="bi bi-clock-history me-1"></i> Time Metrics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('time_analysis') }}" href="{{ url_for('time_analysis') }}">
+                            <i class="bi bi-bar-chart-line me-1"></i> Time Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('survey_analysis') }}" href="{{ url_for('survey_analysis') }}">
+                            <i class="bi bi-clipboard-data me-1"></i> Survey Analysis
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('provincial_dashboard') }}" href="{{ url_for('provincial_dashboard') }}">
+                            <i class="bi bi-bar-chart-steps me-1"></i> Provincial Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Register Patient – only for district_admin and reception -->
+                    {% if session['role'] in ['district_admin', 'reception'] %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('register_patient_web') }}" href="{{ url_for('register_patient_web') }}">
+                            <i class="bi bi-person-plus me-1"></i> Register Patient
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Admin dropdown for main admin -->
+                    {% if session['role'] == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear me-1"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manage_service_points') }}">Service Points</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manage_districts') }}">Manage Districts</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manage_provinces') }}">Manage Provinces</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('clear_data') }}">Clear Data</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('create_backup') }}">Create Backup</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{{ url_for('restore_backup') }}" enctype="multipart/form-data">
+                                    <div class="px-3 py-2">
+                                        <input type="file" name="backup_file" accept=".db" class="form-control form-control-sm mb-2">
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">Restore Backup</button>
+                                    </div>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    {% elif session['role'] == 'district_admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="districtAdminDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear me-1"></i> District Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manage_service_points') }}">Service Points</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3 text-white">
+                        {% if session['role'] == 'district_admin' and session.get('district_name') %}
+                            <i class="bi bi-building"></i> {{ session['district_name'] }}
+                        {% elif session['role'] == 'provincial' and session.get('province_name') %}
+                            <i class="bi bi-globe"></i> {{ session['province_name'] }}
+                        {% endif %}
+                    </span>
+                    {% if session['user_id'] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> {{ session.get('role', 'User')|capitalize }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flashes">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">© 2025 MediTrack - Patient Flow Management System</p>
+            <small class="text-muted">v1.0.0</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const current = location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if(link.getAttribute('href') === current) {
+                    link.classList.add('active');
+                }
+            });
+            const toastElList = document.querySelectorAll('.toast');
+            const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl));
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

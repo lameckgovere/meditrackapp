@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Register New Patient</h4>
+    </div>
+    <div class="card-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {% if districts %}
+            <div class="mb-3">
+                <label class="form-label">District</label>
+                <select class="form-select" name="district_id" required>
+                    <option value="">Select district</option>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" name="district_id" value="{{ user.district_id }}">
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Patient Full Name</label>
+                <input type="text" class="form-control" id="name" name="name" required placeholder="Enter patient's full name">
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-person-plus"></i> Register Patient
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

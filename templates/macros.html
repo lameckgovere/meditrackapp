@@ -1,0 +1,3 @@
+{% macro format_time(dt, format='%Y-%m-%d %H:%M') -%}
+    {%- if dt %}{{ dt.strftime(format) }}{%- else -%}-{%- endif -%}
+{%- endmacro %}

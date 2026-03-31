@@ -1,0 +1,208 @@
+{% from 'macros.html' import format_time %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-0">Dashboard</h2>
+    <p class="text-muted">Real-time patient flow overview</p>
+</div>
+
+<div class="row">
+    <!-- Sidebar with Quick Actions -->
+    <div class="col-lg-3 mb-4">
+        <div class="card dashboard-card sidebar">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <!-- Register Patient – only for district_admin and reception -->
+                    {% if session['role'] in ['district_admin', 'reception'] %}
+                    <a href="{{ url_for('register_patient_web') }}" class="btn btn-primary mb-2">
+                        <i class="bi bi-person-plus me-1"></i> Register Patient
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('service_points') }}" class="btn btn-success mb-2">
+                        <i class="bi bi-geo-alt me-1"></i> Service Points
+                    </a>
+                    <a href="{{ url_for('survey') }}" class="btn btn-info mb-2">
+                        <i class="bi bi-clipboard me-1"></i> Take Survey
+                    </a>
+                    <a href="{{ url_for('time_analysis') }}" class="btn btn-warning mb-2">
+                        <i class="bi bi-bar-chart-line me-1"></i> Time Analysis
+                    </a>
+                    <a href="{{ url_for('patient_list') }}" class="btn btn-secondary mb-2">
+                        <i class="bi bi-people me-1"></i> View Patients
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <div class="row mb-4">
+            <!-- Stats Cards -->
+            <div class="col-md-3 mb-4">
+                <div class="card dashboard-card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Today's Patients</h5>
+                                <h2 class="mb-0">{{ todays_patients }}</h2>
+                            </div>
+                            <i class="bi bi-people stat-icon"></i>
+                        </div>
+                        <p class="card-text mt-2 mb-0">Active: {{ active_patients|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card dashboard-card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Today's Surveys</h5>
+                                <h2 class="mb-0">{{ todays_surveys }}</h2>
+                            </div>
+                            <i class="bi bi-clipboard-check stat-icon"></i>
+                        </div>
+                        <p class="card-text mt-2 mb-0">Feedback collected</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card dashboard-card text-white bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">Active Services</h5>
+                                <h2 class="mb-0">{{ service_points|sum(attribute='active_count') }}</h2>
+                            </div>
+                            <i class="bi bi-activity stat-icon"></i>
+                        </div>
+                        <p class="card-text mt-2 mb-0">In progress</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card dashboard-card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title">In Queue</h5>
+                                <h2 class="mb-0">{{ service_points|sum(attribute='queue_count') }}</h2>
+                            </div>
+                            <i class="bi bi-hourglass-split stat-icon"></i>
+                        </div>
+                        <p class="card-text mt-2 mb-0">Waiting for service</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Active Patients -->
+            <div class="col-lg-6 mb-4">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span>Active Patients</span>
+                            <span class="badge bg-primary">{{ active_patients|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if active_patients %}
+                        <div class="list-group">
+                            {% for patient in active_patients %}
+                            <a href="{{ url_for('patient_detail', id=patient.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ patient.name }}</h5>
+                                    <span class="badge bg-{{ 'success' if patient.exit_time else 'warning' }}">
+                                        {{ patient.current_wait|format_min_sec }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        Arrived: {{ format_time(patient.arrival_time, '%H:%M') }}
+                                    </small>
+                                    <small>
+                                        {% if patient.services and not patient.services[-1].end_time %}
+                                            At {{ patient.services[-1].service_point.name }}
+                                        {% else %}
+                                            In Queue
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">No Active Patients</h5>
+                            <p class="text-muted">All patients have been served</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Points Status -->
+            <div class="col-lg-6 mb-4">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Service Points Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+    <tr>
+        <th>Service Point</th>
+        <th>Queue</th>
+        <th>Active</th>
+        <th>Avg Wait</th>
+    </tr>
+</thead>
+                            <tbody>
+                                {% for sp in service_points %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('service_point_detail', id=sp.id) }}">
+                                            {{ sp.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ sp.queue_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ sp.active_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if avg_wait_times.get(sp.id, 0) > 0 %}
+                                        {{ (avg_wait_times[sp.id] / 60)|round(1) }} min
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="bi bi-exclamation-circle text-warning" style="font-size: 2rem;"></i>
+                                        <p class="mt-2 mb-0">No service points configured</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

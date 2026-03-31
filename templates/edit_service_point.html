@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            {% if point %}Edit Service Point{% else %}Add New Service Point{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% if point %}{{ url_for('edit_service_point', id=point.id) }}{% else %}{{ url_for('add_service_point') }}{% endif %}">
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-control" name="name" value="{{ point.name if point }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Order</label>
+                <input type="number" class="form-control" name="order" value="{{ point.order if point }}" min="1" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Default Service</label>
+                <input type="text" class="form-control" name="default_service" value="{{ point.default_service if point }}" required>
+            </div>
+
+            {% if user_role == 'admin' %}
+            <div class="mb-3">
+                <label class="form-label">District</label>
+                <select class="form-select" name="district_id" required>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}" {% if point and point.district_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if point %}Update{% else %}Create{% endif %}
+                </button>
+                <a href="{{ url_for('manage_service_points') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

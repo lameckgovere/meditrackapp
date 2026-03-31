@@ -1,0 +1,91 @@
+{% from 'macros.html' import format_time %}
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Today's Patients</h2>
+    {% if session['role'] in ['district_admin', 'reception'] %}
+    <a href="{{ url_for('register_patient_web') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i> New Patient
+    </a>
+    {% endif %}
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Arrival Time</th>
+                    <th>Status</th>
+                    <th>Current Service</th>
+                    <th>Wait Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td>{{ patient.id }}</td>
+                    <td>{{ patient.name }}</td>
+                    <td>{{ format_time(patient.arrival_time, '%H:%M') }}</td>
+                    <td>
+                        {% if patient.exit_time %}
+                        <span class="badge bg-success">Completed</span>
+                        {% else %}
+                        <span class="badge bg-warning">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set current_service = patient.services|selectattr("end_time", "none")|first %}
+                        {% if current_service %}
+                        {{ current_service.service_point.name }}
+                        {% else %}
+                        {% if patient.services %}
+                        Completed
+                        {% else %}
+                        Not Started
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not patient.exit_time %}
+                        {{ patient.current_wait|format_min_sec }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('patient_detail', id=patient.id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        {% if session['role'] == 'admin' %}
+                        <form method="POST" action="{{ url_for('delete_patient', id=patient.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this patient? This action cannot be undone.')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No patients today</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

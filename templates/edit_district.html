@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card mx-auto" style="max-width:500px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">{% if district %}Edit District{% else %}Add New District{% endif %}</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">District Name</label>
+                <input type="text" class="form-control" name="name" value="{{ district.name if district else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Province</label>
+                <select class="form-select" name="province_id">
+                    <option value="">-- None --</option>
+                    {% for p in provinces %}
+                    <option value="{{ p.id }}" {% if district and district.province_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{{ url_for('manage_districts') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% from 'macros.html' import format_time %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Patient: {{ patient.name }}</h2>
+    <div>
+        {% if not patient.exit_time %}
+        <form method="POST" action="{{ url_for('exit_patient') }}" class="d-inline">
+            <input type="hidden" name="id" value="{{ patient.id }}">
+            <button type="submit" class="btn btn-danger me-2" onclick="return confirm('Are you sure you want to exit this patient?')">
+                Exit Patient
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('patient_list') }}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="mb-4">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Patient Information</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 80px; height: 80px; font-size: 2rem;">
+                        {{ patient.name[0] }}
+                    </div>
+                    <h4 class="mt-3">{{ patient.name }}</h4>
+                </div>
+                <p class="mb-1">Arrived: {{ format_time(patient.arrival_time) }}</p>
+                {% if patient.exit_time %}
+                <p>Completed: {{ format_time(patient.exit_time) }}</p>
+                {% endif %}
+                <div class="mt-3">
+                    <img src="{{ generate_qr_code(patient_url) }}" class="img-fluid" width="150">
+                    <p class="text-muted mt-2">Scan to view patient details and service timeline</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Service Timeline</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for service in patient.services %}
+                    <div class="timeline-item">
+                        <div class="timeline-point"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between">
+                                <h5>{{ service.service_point.name }}</h5>
+                                <span class="badge bg-{{ 'success' if service.end_time else 'warning' }}">
+                                    {{ service.service_name }}
+                                </span>
+                            </div>
+
+                            {% if service.start_time %}
+                            <div class="d-flex justify-content-between mt-2">
+                                <div>
+                                    <small class="text-muted">
+                                        <strong>Started:</strong> {{ format_time(service.start_time) }}
+                                    </small>
+                                </div>
+                                {% if service.end_time %}
+                                <div>
+                                    <small class="text-muted">
+                                        <strong>Ended:</strong> {{ format_time(service.end_time) }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-2">
+                                <div>
+                                    <small>Wait: {{ service.waiting_time|format_min_sec }}</small>
+                                </div>
+                                <div>
+                                    <small>Service: {{ service.service_time|format_min_sec }}</small>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mt-2 mb-0 py-1">
+                                <small>Service not yet started</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if patient.exit_time %}
+                    <div class="timeline-item">
+                        <div class="timeline-point bg-success"></div>
+                        <div class="timeline-content">
+                            <h5>Completed</h5>
+                            <small class="text-muted">
+                                Patient exited at {{ format_time(patient.exit_time) }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    background-color: #4361ee;
+    color: white;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

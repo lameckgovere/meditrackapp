@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Manage Service Points</h2>
+    <div>
+        <a href="{{ url_for('create_backup') }}" class="btn btn-warning me-2">
+            <i class="bi bi-download me-1"></i> Create Backup
+        </a>
+        <a href="{{ url_for('add_service_point') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Service Point
+        </a>
+    </div>
+</div>
+
+<!-- District filter (only for admin) -->
+{% if user_role == 'admin' %}
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Filter by District</label>
+                <select name="district_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Districts</option>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}" {% if selected_district_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+
+                    <th>Name</th>
+                    <th>Order</th>
+                    <th>Default Service</th>
+                    {% if user_role == 'admin' %}
+                    <th>District</th>
+                    {% endif %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for point in points %}
+                <tr>
+                    <td>{{ point.name }}</td>
+                    <td>{{ point.order }}</td>
+                    <td>{{ point.default_service }}</td>
+                    {% if user_role == 'admin' %}
+                    <td>{{ point.district.name if point.district else '-' }}</td>
+                    {% endif %}
+                    <td>
+                        <a href="{{ url_for('edit_service_point', id=point.id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form method="POST" action="{{ url_for('delete_service_point', id=point.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this service point? This cannot be undone if it has no associated services.')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{% if user_role == 'admin' %}5{% else %}4{% endif %}" class="text-center py-4">
+                        <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">No Service Points Found</h5>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

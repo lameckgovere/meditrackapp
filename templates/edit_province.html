@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            {% if province %}Edit Province{% else %}Add New Province{% endif %}
+        </h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Province Name</label>
+                <input type="text" class="form-control" name="name" value="{{ province.name if province else '' }}" required>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if province %}Update{% else %}Create{% endif %}
+                </button>
+                <a href="{{ url_for('manage_provinces') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

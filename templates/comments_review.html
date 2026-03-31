@@ -1,0 +1,31 @@
+<!-- templates/comments_review.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Comments Review</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 900px; margin: auto; }
+    h2 { text-align: center; }
+    .comment-block { background: #f9f9f9; border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
+    .comment-block h4 { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+
+  <h2>Grouped Comments Review</h2>
+
+  {% for item in grouped %}
+    <div class="comment-block">
+      <h4>{{ item.comment }}</h4>
+      <p><strong>Mentions:</strong> {{ item.count }}</p>
+      <p><strong>Timestamps:</strong> {{ item.timestamps|join(', ') }}</p>
+    </div>
+  {% endfor %}
+
+  <div style="text-align:center;">
+    <button onclick="window.location.href='{{ url_for('index') }}'">Back</button>
+  </div>
+
+</body>
+</html>

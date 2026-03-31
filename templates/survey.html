@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 600px;">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0 text-center">Patient Feedback Survey</h4>
+    </div>
+    <div class="card-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="post">
+            <!-- District selection -->
+            {% if session['role'] in ['district_admin', 'reception'] %}
+                <input type="hidden" name="district_id" value="{{ session['district_id'] }}">
+            {% else %}
+                <div class="mb-3">
+                    <label class="form-label">Select District</label>
+                    <select name="district_id" class="form-select" required>
+                        <option value="">-- Select district --</option>
+                        {% for d in districts %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Please select the district where you received service.</div>
+                </div>
+            {% endif %}
+
+            <!-- Survey questions -->
+            <div class="mb-3">
+                <label class="form-label">Were you satisfied with the service?</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="satisfaction" id="satisfaction-yes" value="yes" autocomplete="off" required>
+                    <label class="btn btn-outline-success" for="satisfaction-yes">Yes</label>
+                    <input type="radio" class="btn-check" name="satisfaction" id="satisfaction-no" value="no" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="satisfaction-no">No</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Did you receive all the services you needed?</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="received_services" id="services-yes" value="yes" autocomplete="off" required>
+                    <label class="btn btn-outline-success" for="services-yes">Yes</label>
+                    <input type="radio" class="btn-check" name="received_services" id="services-no" value="no" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="services-no">No</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Were our staff courteous and respectful?</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="courteous" id="courteous-yes" value="yes" autocomplete="off" required>
+                    <label class="btn btn-outline-success" for="courteous-yes">Yes</label>
+                    <input type="radio" class="btn-check" name="courteous" id="courteous-no" value="no" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="courteous-no">No</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Was the service provided in a timely manner?</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="speed" id="speed-yes" value="yes" autocomplete="off" required>
+                    <label class="btn btn-outline-success" for="speed-yes">Yes</label>
+                    <input type="radio" class="btn-check" name="speed" id="speed-no" value="no" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="speed-no">No</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Additional comments or suggestions</label>
+                <textarea name="comments" class="form-control" rows="3" placeholder="Your feedback helps us improve"></textarea>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-send me-1"></i> Submit Feedback
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

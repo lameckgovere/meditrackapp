@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card mx-auto" style="max-width: 600px;">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Clear All Data</h4>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> This action will permanently delete all patient data, services, surveys, and exit logs.
+            This cannot be undone!
+        </div>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Type "DELETE" to confirm</label>
+                <input type="text" class="form-control" name="confirmation" required>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i> Delete All Data
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

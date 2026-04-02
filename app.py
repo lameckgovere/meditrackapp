@@ -578,7 +578,8 @@ def service_point_detail(id):
         queue=queue,
         active=active,
         pending_actions=pending_actions,
-        all_service_points=all_service_points
+        all_service_points=all_service_points,
+        user=user   # <-- this was missing
     )
 
 @app.route('/time_metrics')

@@ -1,49 +1,241 @@
+{% from 'macros.html' import format_time %}
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card mx-auto" style="max-width: 500px;">
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Register New Patient</h4>
-    </div>
-    <div class="card-body">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-            {% if districts %}
-            <div class="mb-3">
-                <label class="form-label">District</label>
-                <select class="form-select" name="district_id" required>
-                    <option value="">Select district</option>
-                    {% for d in districts %}
-                    <option value="{{ d.id }}">{{ d.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% else %}
-            <input type="hidden" name="district_id" value="{{ user.district_id }}">
-            {% endif %}
-
-            <div class="mb-3">
-                <label for="name" class="form-label">Patient Full Name</label>
-                <input type="text" class="form-control" id="name" name="name" required placeholder="Enter patient's full name">
-            </div>
-
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-person-plus"></i> Register Patient
-                </button>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Service Point: {{ service_point.name }}</h2>
+  <a href="{{ url_for('service_points') }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Service Points
+  </a>
 </div>
+
+<div class="row">
+  <!-- Queue Section -->
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Queue ({{ queue|length }})</h5>
+      </div>
+      <div class="card-body">
+        {% if queue %}
+        <div class="list-group">
+          {% for svc in queue %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">{{ svc.patient.name }}</h6>
+              <small class="text-muted">ID: {{ svc.patient.id }}</small><br>
+              <small>Arrived: {{ format_time(svc.patient.arrival_time, '%H:%M') }}</small>
+            </div>
+            <button class="btn btn-primary start-service-btn"
+                    data-service-id="{{ svc.id }}">
+              Start Service
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+          <h5 class="mt-3">No Patients in Queue</h5>
+          <p class="text-muted">All patients are being served</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Services Section -->
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Active Services ({{ active|length }})</h5>
+      </div>
+      <div class="card-body">
+        {% if active %}
+        <div class="list-group">
+          {% for svc in active %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">{{ svc.patient.name }}</h6>
+              <small class="text-muted">ID: {{ svc.patient.id }}</small><br>
+              <small>Started: {{ format_time(svc.start_time, '%H:%M') }}</small>
+            </div>
+            <button class="btn btn-success complete-service-btn"
+                    data-service-id="{{ svc.id }}"
+                    data-patient-id="{{ svc.patient.id }}">
+              Complete
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+          <h5 class="mt-3">No Active Services</h5>
+          <p class="text-muted">All services are completed</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Actions Section -->
+  {% if pending_actions %}
+  <div class="col-md-12">
+    <div class="card mb-4 border-warning">
+      <div class="card-header bg-warning text-white">
+        <h5 class="mb-0">Pending Actions ({{ pending_actions|length }})</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          These patients need next service assignment
+        </div>
+        <div class="list-group">
+          {% for svc in pending_actions %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">{{ svc.patient.name }}</h6>
+              <small class="text-muted">ID: {{ svc.patient.id }}</small><br>
+              <small>Service completed: {{ format_time(svc.end_time, '%H:%M') }}</small>
+            </div>
+            <button class="btn btn-info pending-action-btn"
+                    data-service-id="{{ svc.id }}"
+                    data-patient-id="{{ svc.patient.id }}">
+              Assign Next Service
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Next Service Modal -->
+<div class="modal fade" id="nextServiceModal" tabindex="-1"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Select Next Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="nextServiceForm">
+          <input type="hidden" name="patient_id" id="nextPatientId">
+          <div class="mb-3">
+            <label class="form-label">Service Point</label>
+            <select name="service_point_id" class="form-select" required>
+              <option value="">Select a service point</option>
+              {% for sp in all_service_points %}
+              <option value="{{ sp.id }}">{{ sp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Service Name</label>
+            <input type="text" name="service_name" class="form-control" required
+                   placeholder="Enter service name">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="noMoreServicesBtn">
+          Exit Patient
+        </button>
+        <button type="button" class="btn btn-primary" id="confirmNextService">
+          Assign Service
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Start service
+document.querySelectorAll('.start-service-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const id = this.dataset.serviceId;
+    fetch(`/service/start/${id}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) alert(d.error);
+      else location.reload();
+    });
+  });
+});
+
+// Complete service
+document.querySelectorAll('.complete-service-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const serviceId = this.dataset.serviceId;
+    const patientId = this.dataset.patientId;
+
+    fetch(`/service/complete/${serviceId}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+      } else if (data.status === 'needs_action') {
+        // Show next service modal
+        document.getElementById('nextPatientId').value = patientId;
+        const modal = new bootstrap.Modal(document.getElementById('nextServiceModal'));
+        modal.show();
+      } else {
+        location.reload();
+      }
+    });
+  });
+});
+
+// Pending actions
+document.querySelectorAll('.pending-action-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const patientId = this.dataset.patientId;
+    document.getElementById('nextPatientId').value = patientId;
+    const modal = new bootstrap.Modal(document.getElementById('nextServiceModal'));
+    modal.show();
+  });
+});
+
+document.getElementById('confirmNextService').addEventListener('click', () => {
+  const formData = new FormData(document.getElementById('nextServiceForm'));
+
+  fetch('/service/add_manual', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(Object.fromEntries(formData))
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) {
+      alert(data.error);
+    } else {
+      location.reload();
+    }
+  });
+});
+
+document.getElementById('noMoreServicesBtn').addEventListener('click', function() {
+  const patientId = document.getElementById('nextPatientId').value;
+
+  if (confirm('This will exit the patient. Are you sure there are no more services needed?')) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{{ url_for('exit_patient') }}";
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'id';
+    input.value = patientId;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  }
+});
+</script>
 {% endblock %}
